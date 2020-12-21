@@ -11,7 +11,7 @@ apply plugin: 'net.minecraftforge.gradle.forge'
 //Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 
 
-version = "0.2.2"
+version = "0.2.3"
 group = "hybridworld" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "hybridworld"
 
@@ -21,14 +21,9 @@ compileJava {
 }
 
 repositories {
-    mavenCentral()
     maven {
-        name = 'sonatype'
-        url = 'https://oss.sonatype.org/content/repositories/public/'
-    }
-    maven {
-        name = 'spongepowered'
-        url = 'http://repo.spongepowered.org/maven'
+        name = "JitPack"
+        url = "https://jitpack.io/"
     }
 }
 
@@ -46,9 +41,12 @@ minecraft {
 }
 
 dependencies {
-    // for runeimt dependency, put them in mods/
-    compileOnly files('lib/CubicWorldGen-1.12.2-0.0.107.0-SNAPSHOT-dev.jar')
-    compileOnly files('lib/CubicChunks-1.12.2-0.0.1028.0-SNAPSHOT-dev.jar')
+    compileOnly ("com.github.OpenCubicChunks.CubicChunks:cubicchunks:0d61d787ed052ad53391c3ebe9799e4ed2da3659") {
+        transitive = false
+    }
+    compileOnly ("com.github.OpenCubicChunks:CubicWorldGen:27de56d2f792513873584b2f8fd9f3082fb259ec") {
+        transitive = false
+    }
 }
 
 processResources {

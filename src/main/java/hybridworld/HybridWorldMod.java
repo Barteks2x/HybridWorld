@@ -3,14 +3,24 @@ package hybridworld;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import io.github.opencubicchunks.cubicchunks.api.world.ICubicWorld;
+import io.github.opencubicchunks.cubicchunks.api.world.ICubicWorldServer;
+import io.github.opencubicchunks.cubicchunks.cubicgen.CustomCubicMod;
+import net.minecraft.command.CommandBase;
+import net.minecraft.command.CommandException;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.DimensionManager;
+import net.minecraftforge.server.permission.PermissionAPI;
 import org.apache.logging.log4j.Logger;
 
 import hybridworld.world.gen.HybridTerrainGenerator;
 import hybridworld.world.gen.StructureInitEventHandler;
-import io.github.opencubicchunks.cubicchunks.api.worldgen.CubeGeneratorsRegistry;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.ICubeGenerator;
 import io.github.opencubicchunks.cubicchunks.api.worldgen.VanillaCompatibilityGeneratorProviderBase;
-import io.github.opencubicchunks.cubicchunks.core.worldgen.generator.vanilla.VanillaCompatibilityGenerator;
 import io.github.opencubicchunks.cubicchunks.cubicgen.common.biome.CubicBiome;
 import io.github.opencubicchunks.cubicchunks.cubicgen.customcubic.populator.DefaultDecorator;
 import io.github.opencubicchunks.cubicchunks.cubicgen.customcubic.populator.PrePopulator;
@@ -37,7 +47,7 @@ import net.minecraftforge.fml.relauncher.Side;
 public class HybridWorldMod {
 	public static final String MODID = "hybridworld";	
 	public static final String NAME = "Hybrid world";
-	public static final String VERSION = "0.2.1";
+	public static final String VERSION = "0.2.3";
 	public static final String DEPENCIES = "required:cubicchunks@[0.0.989.0,);required:cubicgen@[0.0.67.0,);required:forge@[14.23.3.2658,)";
 
 	public static Logger LOGGER;
@@ -67,6 +77,41 @@ public class HybridWorldMod {
 
 	@EventHandler
 	public void serverStart(FMLServerStartingEvent event) {
+		event.registerServerCommand(new CommandBase() {
+			@Override
+			public String getName() {
+				return "hybridworld_reload";
+			}
+
+			@Override
+			public String getUsage(ICommandSender sender) {
+				return "/hybridworld_reload";
+			}
+
+			@Override
+			public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+				for (WorldServer world : DimensionManager.getWorlds()) {
+					if (world == null || !((ICubicWorld) world).isCubicWorld()) {
+						continue;
+					}
+					ICubeGenerator cubeGenerator = ((ICubicWorldServer) world).getCubeGenerator();
+					if (cubeGenerator instanceof HybridTerrainGenerator) {
+						((HybridTerrainGenerator) cubeGenerator).onLoad(world);
+						sender.sendMessage(new TextComponentString("Preset for dimension " + world.provider.getDimension() + " has been reloaded. Note that this may cause issues with mods."));
+					}
+				}
+			}
+
+			@Override
+			public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
+				if (sender instanceof EntityPlayer) {
+					//this permission is registered by CWG
+					return PermissionAPI.hasPermission((EntityPlayer) sender, CustomCubicMod.MODID + ".command.reload_preset");
+				} else {
+					return super.checkPermission(server, sender);
+				}
+			}
+		});
 	}
 	
 	@NetworkCheckHandler
